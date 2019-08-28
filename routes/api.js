@@ -1,7 +1,12 @@
-var io = require("socket.io")(8787);
+var CONFIG = require("../config/config");
+const fsCore = require("../core/fsCore");
+const core = new fsCore();
+
+var io = require("socket.io")();
 
 io.of("/api").on("connection", function(socket) {
-  socket.on("login", function(post) {
-    socket.emit("err", { status: 401, message: "Unauthorized" });
-  });
+  core.init(socket);
 });
+
+io.listen(CONFIG.FS.PORT);
+console.log("Server started on port: ", CONFIG.FS.PORT);
