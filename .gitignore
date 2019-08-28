@@ -6,9 +6,5 @@
 .DS_Store
 .env
 
-<<<<<<< HEAD
 .eslintrc.js
 ./package-lock.json
-=======
-./package-lock.json
->>>>>>> 265106afca3bb9d09223bcfed3806eb4d18ce336
