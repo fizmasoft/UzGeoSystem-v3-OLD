@@ -13,5 +13,7 @@ module.exports = {
     DATABASE: process.env.DB_NAME
   },
 
-  SECRET: process.env.SECRET
+  SECRET: process.env.SECRET,
+  NOTIFICATION_INTERVAL: process.env.NOTIFICATION_INTERVAL,
+  SESSION_TIMEOUT: process.env.SESSION_TIMEOUT
 };

@@ -30,15 +30,22 @@ class fsCore {
     this._modules.forEach(module => {
       module.socket = _socket;
       _socket.on(module.Path, post => {
-        if (module.cancelVerify === true) return module.run(post);
+        try {
+          post = JSON.parse(post);
 
-        jwt.verify(post.token, CONFIG.SECRET, function(err) {
-          if (err) {
-            _socket.emit("err", { status: 401, message: "Unauthorized" });
-          } else {
-            module.run(post);
-          }
-        });
+          if (module.cancelVerify === true) return module.run(post);
+          jwt.verify(post.token, CONFIG.SECRET, function(err) {
+            if (err) {
+              console.log(err);
+              _socket.emit("err", { status: 401, message: "Unauthorized" });
+            } else {
+              module.run(post);
+            }
+          });
+        } catch (error) {
+          _socket.emit("err", { error: -1, message: "Error in request" });
+          return;
+        }
       });
     });
   }
