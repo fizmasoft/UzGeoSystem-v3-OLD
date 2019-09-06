@@ -34,12 +34,11 @@ class fsCore {
           post = JSON.parse(post);
 
           if (module.cancelVerify === true) return module.run(post);
-          jwt.verify(post.token, CONFIG.SECRET, function(err) {
+          jwt.verify(post.token, CONFIG.SECRET, function(err, decoded) {
             if (err) {
-              console.log(err);
               _socket.emit("err", { status: 401, message: "Unauthorized" });
             } else {
-              module.run(post);
+              module.run(post, decoded);
             }
           });
         } catch (error) {
