@@ -2,7 +2,7 @@
 
 var jwt = require("jsonwebtoken");
 
-class fsModule {
+class fsLogin {
   constructor(parent) {
     this.Parent = parent;
     this.Path = "login";
@@ -41,4 +41,4 @@ class fsModule {
   }
 }
 
-module.exports = fsModule;
+module.exports = fsLogin;
