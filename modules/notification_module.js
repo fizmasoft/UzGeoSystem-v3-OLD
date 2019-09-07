@@ -7,7 +7,7 @@
 
 /*
  * for updating notification status emit and listen `updateNotificationStatus`
- * params {jwt token, action, id} - id -> notification id
+ * params {jwt token, action = `updateNotificationStatus`, id} - id -> notification id
  */
 
 var jwt = require("jsonwebtoken");
