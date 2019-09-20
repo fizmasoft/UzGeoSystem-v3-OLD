@@ -5,7 +5,7 @@
  * params {jwt token, name, price, allowed_features, devices_limit, tariff_id}
  */
 
-class fsTarif {
+class fsTariff {
   constructor(parent) {
     this.Parent = parent;
     this.Path = "tariff";
@@ -127,4 +127,4 @@ class fsTarif {
   }
 }
 
-module.exports = fsTarif;
+module.exports = fsTariff;
