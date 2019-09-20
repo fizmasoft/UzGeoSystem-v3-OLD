@@ -1,14 +1,14 @@
 "use strict";
 
 /*
- * listener `privilages`
+ * listener `privileges`
  * params {jwt token, user_id, feature_id}
  */
 
-class fsPrivilages {
+class fsPrivileges {
   constructor(parent) {
     this.Parent = parent;
-    this.Path = "privilages";
+    this.Path = "privileges";
     this.cancelVerify = true;
   }
 
@@ -23,7 +23,7 @@ class fsPrivilages {
     if (this.validateRequest(post))
       this.Parent.DB.query(
         `INSERT INTO 
-            fizmasoft_privilages (user_id, feature_id) 
+            fizmasoft_privileges (user_id, feature_id) 
         VALUES 
             (${post.user_id}, '${post.feature_id}');`,
         err => {
@@ -35,21 +35,21 @@ class fsPrivilages {
             });
           return this.socket.emit(this.Path, {
             status: 201,
-            message: "Privilage created"
+            message: "Privileges created"
           });
         }
       );
   }
 
   put(post) {
-    if (!post.privilage_id)
+    if (!post.privilege_id)
       return this.socket.emit("err", { status: 400, message: "Bad request" });
 
     if (this.validateRequest(post)) {
       this.Parent.DB.query(
-        `UPDATE fizmasoft_privilages 
+        `UPDATE fizmasoft_privileges 
         SET (user_id, feature_id)
-            = (${post.user_id}, '${post.feature_id}') WHERE id = ${post.privilage_id};`,
+            = (${post.user_id}, '${post.feature_id}') WHERE id = ${post.privilege_id};`,
         err => {
           this.Parent.DB.disconnect();
           if (err)
@@ -59,7 +59,7 @@ class fsPrivilages {
             });
           return this.socket.emit(this.Path, {
             status: 204,
-            message: "Privilage updated"
+            message: "Privilege updated"
           });
         }
       );
@@ -67,7 +67,7 @@ class fsPrivilages {
   }
 
   get() {
-    this.Parent.DB.query(`SELECT * FROM fizmasoft_privilages`, (err, res) => {
+    this.Parent.DB.query(`SELECT * FROM fizmasoft_privileges`, (err, res) => {
       this.Parent.DB.disconnect();
       if (err)
         return this.socket.emit("err", {
@@ -79,11 +79,11 @@ class fsPrivilages {
   }
 
   delete(post) {
-    if (!post.privilage_id)
+    if (!post.privilege_id)
       return this.socket.emit("err", { status: 400, message: "Bad request" });
 
     this.Parent.DB.query(
-      `DELETE FROM fizmasoft_privilages WHERE id = ${post.privilage_id}`,
+      `DELETE FROM fizmasoft_privileges WHERE id = ${post.privilege_id}`,
       err => {
         this.Parent.DB.disconnect();
         if (err)
@@ -93,7 +93,7 @@ class fsPrivilages {
           });
         return this.socket.emit(this.Path, {
           status: 204,
-          message: "Privilage deleted"
+          message: "Privilege deleted"
         });
       }
     );
@@ -122,4 +122,4 @@ class fsPrivilages {
   }
 }
 
-module.exports = fsPrivilages;
+module.exports = fsPrivileges;
