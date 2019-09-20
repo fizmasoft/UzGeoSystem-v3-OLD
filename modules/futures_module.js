@@ -44,7 +44,7 @@ class fsFeatures {
     );
   }
 
-  run(post, decodedJWT) {
+  run(post) {
     this.Parent.DB.connect();
     switch (post.action) {
       case "updateFeatures":

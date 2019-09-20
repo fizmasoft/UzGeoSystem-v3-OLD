@@ -20,9 +20,9 @@ class fsNotification {
     this.maxId = 0;
   }
 
-  updateNotificationStatus(post, decoded) {
+  updateNotificationStatus(post) {
     this.Parent.DB.query(
-      `UPDATE fizmasoft_notification SET acknowledged = TRUE WHERE user_id = ${decoded.user[0].id} AND id = ${post.id}`,
+      `UPDATE fizmasoft_notification SET acknowledged = TRUE WHERE user_id = ${this.decoded.user[0].id} AND id = ${post.id}`,
       err => {
         if (err) {
           this.socket.emit("err", err);
@@ -36,11 +36,11 @@ class fsNotification {
     );
   }
 
-  run(post, decodedJWT) {
+  run(post) {
     this.Parent.DB.connect();
     switch (post.action) {
       case "updateNotificationStatus":
-        this.updateNotificationStatus(post, decodedJWT);
+        this.updateNotificationStatus(post);
         break;
       default:
         // notification listener
