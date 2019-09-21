@@ -9,7 +9,7 @@ class fsPrivileges {
   constructor(parent) {
     this.Parent = parent;
     this.Path = "privileges";
-    this.cancelVerify = true;
+    this.cancelVerify = false;
   }
 
   validateRequest(post) {

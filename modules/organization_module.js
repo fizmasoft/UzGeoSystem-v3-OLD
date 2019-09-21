@@ -9,7 +9,7 @@ class fsOrganization {
   constructor(parent) {
     this.Parent = parent;
     this.Path = "organization";
-    this.cancelVerify = true;
+    this.cancelVerify = false;
   }
 
   validateRequest(post) {
@@ -20,7 +20,6 @@ class fsOrganization {
       post.status === "" ||
       !post.devices_limit
     ) {
-      console.log(post);
       this.socket.emit("err", { status: 400, message: "Bad request" });
       return false;
     } else return true;
@@ -77,15 +76,18 @@ class fsOrganization {
   }
 
   get() {
-    this.Parent.DB.query(`SELECT * FROM fizmasoft_organization`, (err, res) => {
-      this.Parent.DB.disconnect();
-      if (err)
-        return this.socket.emit("err", {
-          status: 500,
-          message: "Internal servewr error"
-        });
-      return this.socket.emit(this.Path, { status: 200, data: res.rows });
-    });
+    this.Parent.DB.query(
+      `SELECT fo.*, ft.name AS tariff_name FROM fizmasoft_organization fo JOIN fizmasoft_tariff ft ON fo.tariff_id = ft.id`,
+      (err, res) => {
+        this.Parent.DB.disconnect();
+        if (err)
+          return this.socket.emit("err", {
+            status: 500,
+            message: "Internal servewr error"
+          });
+        return this.socket.emit(this.Path, { status: 200, data: res.rows });
+      }
+    );
   }
 
   // cascade or delete from fizmasoft_users is needed
