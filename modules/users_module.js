@@ -1,23 +1,27 @@
 "use strict";
 
 /*
- * listener `tariff`
- * params {jwt token, name, price, allowed_features, devices_limit, tariff_id}
+ * listener `users`
+ * params {jwt token, name, username, surname, position, password, status, organization_id, photo, user_id }
  */
 
-class fsTariff {
+class fsUsers {
   constructor(parent) {
     this.Parent = parent;
-    this.Path = "tariff";
+    this.Path = "users";
     this.cancelVerify = false;
   }
 
   validateRequest(post) {
     if (
+      !post.organization_id ||
+      !post.username ||
+      !post.password ||
       !post.name ||
-      !post.price ||
-      !post.allowed_features ||
-      !post.devices_limit
+      !post.surname ||
+      !post.position ||
+      !post.photo ||
+      post.status === ""
     ) {
       this.socket.emit("err", { status: 400, message: "Bad request" });
       return false;
@@ -28,9 +32,9 @@ class fsTariff {
     if (this.validateRequest(post))
       this.Parent.DB.query(
         `INSERT INTO 
-            fizmasoft_tariff (name, price, allowed_features, devices_limit) 
+            fizmasoft_users (organization_id, username, password, name, surname, position, photo, status) 
         VALUES 
-            ('${post.name}', ${post.price}, '${post.allowed_features}', ${post.devices_limit});`,
+            (${post.organization_id}, '${post.username}', '${post.password}', '${post.name}', '${post.surname}', '${post.position}', '${post.photo}', ${post.status});`,
         err => {
           this.Parent.DB.disconnect();
           if (err)
@@ -40,21 +44,22 @@ class fsTariff {
             });
           return this.socket.emit(this.Path, {
             status: 201,
-            message: "Tariff created"
+            message: "User created"
           });
         }
       );
   }
 
   put(post) {
-    if (!post.tariff_id)
+    if (!post.user_id)
       return this.socket.emit("err", { status: 400, message: "Bad request" });
 
     if (this.validateRequest(post)) {
       this.Parent.DB.query(
-        `UPDATE fizmasoft_tariff 
-        SET (name, price, allowed_features, devices_limit)
-            = ('${post.name}', ${post.price}, '${post.allowed_features}', ${post.devices_limit}) WHERE id = ${post.tariff_id};`,
+        `UPDATE fizmasoft_organization 
+        SET (organization_id, username, password, name, surname, position, photo, status)
+            = (${post.organization_id}, '${post.username}', '${post.password}', '${post.name}', '${post.surname}', '${post.position}', '${post.photo}', ${post.status}) 
+        WHERE id = ${post.user_id};`,
         err => {
           this.Parent.DB.disconnect();
           if (err)
@@ -64,7 +69,7 @@ class fsTariff {
             });
           return this.socket.emit(this.Path, {
             status: 204,
-            message: "Tariff updated"
+            message: "User updated"
           });
         }
       );
@@ -72,23 +77,28 @@ class fsTariff {
   }
 
   get() {
-    this.Parent.DB.query(`SELECT * FROM fizmasoft_tariff`, (err, res) => {
-      this.Parent.DB.disconnect();
-      if (err)
-        return this.socket.emit("err", {
-          status: 500,
-          message: "Internal servewr error"
-        });
-      return this.socket.emit(this.Path, { status: 200, data: res.rows });
-    });
+    if (!post.organization_id)
+      return this.socket.emit("err", { status: 400, message: "Bad request" });
+    this.Parent.DB.query(
+      `SELECT * FROM fizmasoft_users WHERE organization_id = ${post.organization_id}`,
+      (err, res) => {
+        this.Parent.DB.disconnect();
+        if (err)
+          return this.socket.emit("err", {
+            status: 500,
+            message: "Internal servewr error"
+          });
+        return this.socket.emit(this.Path, { status: 200, data: res.rows });
+      }
+    );
   }
 
   delete(post) {
-    if (!post.tariff_id)
+    if (!post.user_id)
       return this.socket.emit("err", { status: 400, message: "Bad request" });
 
     this.Parent.DB.query(
-      `DELETE FROM fizmasoft_tariff WHERE id = ${post.tariff_id}`,
+      `DELETE FROM fizmasoft_users WHERE id = ${post.user_id}`,
       err => {
         this.Parent.DB.disconnect();
         if (err)
@@ -98,7 +108,7 @@ class fsTariff {
           });
         return this.socket.emit(this.Path, {
           status: 204,
-          message: "Tariff deleted"
+          message: "User deleted"
         });
       }
     );
@@ -127,4 +137,4 @@ class fsTariff {
   }
 }
 
-module.exports = fsTariff;
+module.exports = fsUsers;
