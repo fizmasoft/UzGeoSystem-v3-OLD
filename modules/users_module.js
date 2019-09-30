@@ -76,7 +76,7 @@ class fsUsers {
     }
   }
 
-  get() {
+  get(post) {
     if (!post.organization_id)
       return this.socket.emit("err", { status: 400, message: "Bad request" });
     this.Parent.DB.query(
@@ -124,7 +124,7 @@ class fsUsers {
         this.put(post);
         break;
       case "get":
-        this.get();
+        this.get(post);
         break;
       case "delete":
         this.delete(post);

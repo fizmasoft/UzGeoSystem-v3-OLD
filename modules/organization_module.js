@@ -52,13 +52,13 @@ class fsOrganization {
       return this.socket.emit("err", { status: 400, message: "Bad request" });
 
     if (this.validateRequest(post)) {
-      var devices_id = post.devices_id ? post.devices_id : "{}";
       var extra_charge = post.extra_charge ? post.extra_charge : 0;
+      //var devices_id = /* post.devices_id ? post.devices_id :  */ "{}";
 
       this.Parent.DB.query(
         `UPDATE fizmasoft_organization 
-        SET (tariff_id, name, balance, status, devices_limit, devices_id, extra_charge)
-            = ('${post.tariff_id}', '${post.name}', ${post.balance}, ${post.status}, ${post.devices_limit}, '${devices_id}', ${extra_charge}) WHERE id = ${post.organization_id};`,
+        SET (tariff_id, name, balance, status, devices_limit, extra_charge)
+            = ('${post.tariff_id}', '${post.name}', ${post.balance}, ${post.status}, ${post.devices_limit}, ${extra_charge}) WHERE id = ${post.organization_id};`,
         err => {
           this.Parent.DB.disconnect();
           if (err)
@@ -90,7 +90,7 @@ class fsOrganization {
     );
   }
 
-  // cascade or delete from fizmasoft_users is needed
+  // cascade or delete from fizmasoft_users is needed - done
 
   delete(post) {
     if (!post.organization_id)
