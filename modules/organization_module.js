@@ -17,7 +17,9 @@ class fsOrganization {
       !post.tariff_id ||
       !post.name ||
       post.balance === "" ||
+      post.balance === undefined ||
       post.status === "" ||
+      post.status === undefined ||
       !post.devices_limit
     ) {
       this.socket.emit("err", { status: 400, message: "Bad request" });
