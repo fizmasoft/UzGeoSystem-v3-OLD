@@ -4,14 +4,6 @@
  *  params {jwt token, id, name, device_id, notification_type, ack, way, action}
  */
 
-// lng lat
-/* GEOMETRYCOLLECTION(
-    POINT(0 0)
-    POLYLINE(0 0, 0 1, 1 0, 1 1),
-    POLYGON((0 0, 0 1, 1 0, 1 1, 0 0)),
-    POLYGON((0 0, 0 1, 1 0, 1 1, 0 0))
-    ) */
-
 class fsZone {
   constructor(parent) {
     this.Parent = parent;
@@ -47,51 +39,59 @@ class fsZone {
         ]
       },
       {
+        type: "Marker",
+        latlngs: [{ lat: 42.1, lng: 62.2 }]
+      },
+      {
         type: "Line",
         latlngs: [
           { lat: 42.1, lng: 62.2 },
           { lat: 42.2, lng: 62.3 },
           { lat: 42.3, lng: 62.4 }
         ]
+      },
+      {
+        type: "Marker",
+        latlngs: [{ lat: 42.1, lng: 62.2 }]
       }
     ];
 
-    let polygons = "";
-    let lines = "";
+    let collectionString = "";
 
-    let polyObj = way.filter(p => p.type === "Polygon");
-    let lineObj = way.filter(p => p.type === "Line");
-
-    polyObj.forEach((polygon, index, array) => {
-      polygons += `POLYGON((`;
-      polygon.latlngs.forEach(latlng => {
-        polygons += `${latlng.lng} ${latlng.lat}, `;
+    try {
+      way.forEach(element => {
+        if (element.type === "Polygon") {
+          collectionString +=
+            collectionString === "" ? `POLYGON((` : `, POLYGON((`;
+          element.latlngs.forEach((latlng, inx, lngArr) => {
+            collectionString += `${latlng.lng} ${latlng.lat}`;
+            if (inx != lngArr.length - 1) collectionString += `, `;
+            else
+              collectionString += `, ${element.latlngs[0].lng} ${element.latlngs[0].lat}`;
+          });
+          collectionString += `))`;
+        } else if (element.type === "Line") {
+          collectionString +=
+            collectionString === "" ? `POLYLINE(` : `, POLYLINE(`;
+          element.latlngs.forEach((latlng, inx, lngArr) => {
+            collectionString += `${latlng.lng} ${latlng.lat}`;
+            if (inx != lngArr.length - 1) collectionString += `, `;
+          });
+          collectionString += `)`;
+        } else if (element.type === "Marker") {
+          if (element.latlngs.length > 0) {
+            collectionString += collectionString === "" ? `POINT(` : `, POINT(`;
+            collectionString += `${element.latlngs[0].lng} ${element.latlngs[0].lat})`;
+          }
+        }
       });
-      if (index != array.length - 1)
-        polygons += `${polygon.latlngs[0].lng} ${polygon.latlngs[0].lat})), `;
-      else polygons += `${polygon.latlngs[0].lng} ${polygon.latlngs[0].lat}))`;
-    });
-
-    lineObj.forEach((line, index, array) => {
-      lines += `POLYLINE(`;
-      line.latlngs.forEach((latlng, inx, subArr) => {
-        lines += `${latlng.lng} ${latlng.lat}`;
-        if (inx != subArr.length - 1) lines += `, `;
-      });
-      if (index != array.length - 1) lines += `), `;
-      else lines += `)`;
-    });
-
-    var collection = "";
-    if (polygons != "" && lines != "") {
-      collection = `GEOMETRYCOLLECTION(${polygons}, ${lines})`;
-    } else if (polygons != "") {
-      collection = `GEOMETRYCOLLECTION(${polygons})`;
-    } else if (lines != "") {
-      collection = `GEOMETRYCOLLECTION(${lines})`;
+    } catch (TypeError) {
+      return "";
     }
 
-    return collection;
+    return collectionString === ""
+      ? ""
+      : `GEOMETRYCOLLECTION(${collectionString})`;
   }
 
   post(post) {
