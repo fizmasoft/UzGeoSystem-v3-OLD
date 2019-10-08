@@ -21,7 +21,8 @@ class fsUsers {
       !post.surname ||
       !post.position ||
       !post.photo ||
-      post.status === ""
+      post.status === "" ||
+      post.status === undefined
     ) {
       this.socket.emit("err", { status: 400, message: "Bad request" });
       return false;
@@ -34,7 +35,7 @@ class fsUsers {
         `INSERT INTO 
             fizmasoft_users (organization_id, username, password, name, surname, position, photo, status) 
         VALUES 
-            (${post.organization_id}, '${post.username}', '${post.password}', '${post.name}', '${post.surname}', '${post.position}', '${post.photo}', ${post.status});`,
+            (${post.organization_id}, '${post.username}', '${post.password}', '${post.name}', '${post.surname}', '${post.position}', decode('${post.photo}', 'base64'), ${post.status});`,
         err => {
           this.Parent.DB.disconnect();
           if (err)
@@ -56,7 +57,7 @@ class fsUsers {
 
     if (this.validateRequest(post)) {
       this.Parent.DB.query(
-        `UPDATE fizmasoft_organization 
+        `UPDATE fizmasoft_users 
         SET (organization_id, username, password, name, surname, position, photo, status)
             = (${post.organization_id}, '${post.username}', '${post.password}', '${post.name}', '${post.surname}', '${post.position}', '${post.photo}', ${post.status}) 
         WHERE id = ${post.user_id};`,
@@ -80,7 +81,9 @@ class fsUsers {
     if (!post.organization_id)
       return this.socket.emit("err", { status: 400, message: "Bad request" });
     this.Parent.DB.query(
-      `SELECT * FROM fizmasoft_users WHERE organization_id = ${post.organization_id}`,
+      `SELECT 
+          id, organization_id, username, name, surname, position, encode(photo, 'base64') as photo, status 
+      FROM fizmasoft_users WHERE organization_id = ${post.organization_id}`,
       (err, res) => {
         this.Parent.DB.disconnect();
         if (err)
