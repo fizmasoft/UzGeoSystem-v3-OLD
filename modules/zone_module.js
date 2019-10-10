@@ -8,54 +8,11 @@ class fsZone {
   constructor(parent) {
     this.Parent = parent;
     this.Path = "zone";
-    this.table = "fizmasoft_zone";
-    this.cancelVerify = true;
+    this.table = "gps.fizmasoft_zone";
+    this.cancelVerify = false;
   }
 
-  parser(way) {
-    way = [
-      {
-        type: "Line",
-        latlngs: [
-          { lat: 41.1, lng: 69.2 },
-          { lat: 41.2, lng: 69.3 },
-          { lat: 41.3, lng: 69.4 }
-        ]
-      },
-      {
-        type: "Polygon",
-        latlngs: [
-          { lat: 42.5, lng: 62.7 },
-          { lat: 42.6, lng: 62.6 },
-          { lat: 42.7, lng: 62.5 }
-        ]
-      },
-      {
-        type: "Polygon",
-        latlngs: [
-          { lat: 42.1, lng: 62.2 },
-          { lat: 42.2, lng: 62.3 },
-          { lat: 42.3, lng: 62.4 }
-        ]
-      },
-      {
-        type: "Marker",
-        latlngs: [{ lat: 42.1, lng: 62.2 }]
-      },
-      {
-        type: "Line",
-        latlngs: [
-          { lat: 42.1, lng: 62.2 },
-          { lat: 42.2, lng: 62.3 },
-          { lat: 42.3, lng: 62.4 }
-        ]
-      },
-      {
-        type: "Marker",
-        latlngs: [{ lat: 42.1, lng: 62.2 }]
-      }
-    ];
-
+  geoJsonToString(way) {
     let collectionString = "";
 
     try {
@@ -72,7 +29,7 @@ class fsZone {
           collectionString += `))`;
         } else if (element.type === "Line") {
           collectionString +=
-            collectionString === "" ? `POLYLINE(` : `, POLYLINE(`;
+            collectionString === "" ? `LINESTRING(` : `, LINESTRING(`;
           element.latlngs.forEach((latlng, inx, lngArr) => {
             collectionString += `${latlng.lng} ${latlng.lat}`;
             if (inx != lngArr.length - 1) collectionString += `, `;
@@ -95,11 +52,20 @@ class fsZone {
   }
 
   post(post) {
+    if (!post.way || !post.name || !post.notification_type || !post.ack)
+      return this.socket.emit("err", { status: 400, message: "Bad request" });
+
+    post.device_id = post.device_id ? post.device_id : "device_id";
+
+    let parsedGeometry = this.geoJsonToString(post.way);
+    if (parsedGeometry === "")
+      return this.socket.emit("err", { status: 400, message: "Bad request" });
+
     this.Parent.DB.query(
       `INSERT INTO 
             ${this.table} (name, device_id, notification_type, ack, way) 
         VALUES 
-            ('${post.name}', ${post.device_id}, ${post.notification_type}, ${post.ack}, '${post.way}');`,
+            ('${post.name}', ${post.device_id}, ${post.notification_type}, ${post.ack}, ST_Transform(ST_GeomFromText('${parsedGeometry}', 4326), 3857));`,
       err => {
         this.Parent.DB.disconnect();
         if (err)
@@ -116,13 +82,25 @@ class fsZone {
   }
 
   put(post) {
-    if (!post.zone_id)
+    if (
+      !post.zone_id ||
+      !post.way ||
+      !post.name ||
+      !post.notification_type ||
+      !post.ack
+    )
+      return this.socket.emit("err", { status: 400, message: "Bad request" });
+
+    post.device_id = post.device_id ? post.device_id : "device_id";
+
+    let parsedGeometry = this.geoJsonToString(post.way);
+    if (parsedGeometry === "")
       return this.socket.emit("err", { status: 400, message: "Bad request" });
 
     this.Parent.DB.query(
       `UPDATE ${this.table} 
         SET (name, device_id, notification_type, ack, way)
-            = ('${post.name}', ${post.device_id}, ${post.notification_type}, ${post.ack}, '${post.way}') 
+            = ('${post.name}', ${post.device_id}, ${post.notification_type}, ${post.ack}, 'ST_Transform(ST_GeomFromText(${post.parsedGeometry}, 4326), 3857)') 
         WHERE id = ${post.zone_id};`,
       err => {
         this.Parent.DB.disconnect();
@@ -143,9 +121,30 @@ class fsZone {
     if (!post.zone_id)
       return this.socket.emit("err", { status: 400, message: "Bad request" });
     this.Parent.DB.query(
-      `SELECT 
-          id, name, device_id, notification_type, ack, way
-      FROM ${this.table} WHERE zone_id = ${post.zone_id}`,
+      `SELECT row_to_json(fc)
+        FROM (
+            SELECT
+                'FeatureCollection' as "type",
+                array_to_json(array_agg(f)) as "features"
+            FROM (
+                SELECT
+                    'Feature' as "type",
+                    ST_AsGeoJSON(ST_Transform(way, 4326)) :: json as "geometry",
+                    (
+                        SELECT json_strip_nulls(row_to_json(t))
+                        FROM (
+                            SELECT
+                                "id",
+                                "name",
+                                "device_id",
+                                notification_type,
+                                ack
+                        ) t
+                    ) as "properties"
+                FROM ${this.table}
+            WHERE id = ${post.zone_id}
+            ) as f
+        ) as fc;`,
       (err, res) => {
         this.Parent.DB.disconnect();
         if (err)
@@ -153,7 +152,7 @@ class fsZone {
             status: 500,
             message: "Internal servewr error"
           });
-        return this.socket.emit(this.Path, { status: 200, data: res.rows });
+        return this.socket.emit("err", { status: 200, data: res.rows });
       }
     );
   }
@@ -180,7 +179,6 @@ class fsZone {
   }
 
   run(post) {
-    this.parser(post);
     this.Parent.DB.connect();
     switch (post.action) {
       case "post":

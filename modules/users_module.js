@@ -59,7 +59,7 @@ class fsUsers {
       this.Parent.DB.query(
         `UPDATE fizmasoft_users 
         SET (organization_id, username, password, name, surname, position, photo, status)
-            = (${post.organization_id}, '${post.username}', '${post.password}', '${post.name}', '${post.surname}', '${post.position}', '${post.photo}', ${post.status}) 
+            = (${post.organization_id}, '${post.username}', '${post.password}', '${post.name}', '${post.surname}', '${post.position}', decode('${post.photo}', 'base64'), ${post.status}) 
         WHERE id = ${post.user_id};`,
         err => {
           this.Parent.DB.disconnect();
@@ -82,7 +82,7 @@ class fsUsers {
       return this.socket.emit("err", { status: 400, message: "Bad request" });
     this.Parent.DB.query(
       `SELECT 
-          id, organization_id, username, name, surname, position, encode(photo, 'base64') as photo, status 
+          id user_id, organization_id, username, name, surname, position, encode(photo, 'base64') as photo, status 
       FROM fizmasoft_users WHERE organization_id = ${post.organization_id}`,
       (err, res) => {
         this.Parent.DB.disconnect();
