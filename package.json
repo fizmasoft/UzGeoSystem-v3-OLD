@@ -16,7 +16,7 @@
     "dotenv": "^8.1.0",
     "jsonwebtoken": "^8.5.1",
     "pg": "^7.12.1",
-    "socket.io": "^2.2.0"
+    "socket.io": "^2.4.0"
   },
   "devDependencies": {}
 }
